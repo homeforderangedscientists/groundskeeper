@@ -38,6 +38,17 @@
 **What's happening:** The *shape of the collaboration* has a hidden shared-state dimension your coordination model didn't anticipate. Worktrees share git state across the filesystem boundary. Parallel agents share `node_modules`. The bug belongs to the topology, not to any agent.
 **The fix:** Change the shape, not the prompts. If file boundaries aren't clear, draw them. If worktrees are being used as a coordination strategy, use file-boundary parallelism inside a single worktree instead. See `parallel-agents.md` — the v6→v7 pivot is the canonical version of this. *Pin: fix the topology, not the discipline.*
 
+## Closing note — every agent failure has a human antecedent
+
+Before you walk away with a prompt to fix, check upstream. Every failure above has a human-side twin, and the twin is usually where the cycle started.
+
+- You skipped the brainstorm because the fix "felt obvious" — twin to *loops on the same wrong fix*.
+- You skipped the retro because "nothing to learn" — twin to *produces slop*.
+- You accepted "tests pass" as evidence because the verify-and-paste ritual is boring — twin to *confidently lies about state*.
+- You promoted a correction to a CLAUDE.md note instead of a skill because a note is five seconds — twin to *can't be trusted with anything important*.
+
+The antecedent is almost always cheaper to fix than the symptom, and fixing the symptom without the antecedent just reschedules the failure. *Pin: every agent failure has a human antecedent. Look for it before you blame the model.*
+
 ## The rescue protocol (when everything is on fire)
 
 If you just came in to find the partnership in the bad shape — trust collapsed, slop accumulating, loop skipped, retro empty — work this protocol in order. Don't jump ahead.
