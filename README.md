@@ -8,9 +8,31 @@ The engineer + agent playbook for Claude Code — a field manual for partnering 
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/homeforderangedscientists/groundskeeper/main/install.sh)"
 ```
 
-The installer is **additive**: it never overwrites existing playbooks, skills, or CLAUDE.md content. Run it twice and the second run is a no-op except for new files upstream.
+The installer is **additive by default**: it never overwrites existing playbooks, skills, or CLAUDE.md content. Run it twice and the second run is a no-op except for new files upstream.
 
 After installing, restart Claude Code. Then read `~/.claude/playbooks/INDEX.md` for the task-to-playbook map.
+
+### Update to latest upstream
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/homeforderangedscientists/groundskeeper/main/install.sh)" _ --update
+```
+
+Update mode refreshes only the shipped files you haven't modified. The installer tracks each file's SHA256 at install time in `~/.claude/.groundskeeper-manifest`. On `--update`, for each shipped file:
+
+- If your on-disk copy matches the recorded SHA (you haven't edited it) → refresh to upstream.
+- If your on-disk copy differs (you edited it) → preserve your copy, report it.
+- If the file is new upstream (not in your manifest) → install fresh.
+
+Preserved files are listed explicitly at the end so you can decide whether to merge upstream changes manually or re-run with `--force`.
+
+### Force overwrite (destructive)
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/homeforderangedscientists/groundskeeper/main/install.sh)" _ --force
+```
+
+Force mode overwrites every shipped file regardless of local modifications. Use only when you want to discard your local changes and reset to upstream.
 
 ## What it installs
 
@@ -31,7 +53,7 @@ After installing, restart Claude Code. Then read `~/.claude/playbooks/INDEX.md` 
 - `failure-modes-diagnosis` — six failure shapes and the rescue protocol
 - `devops-pipeline-foundation`, `devops-ci-and-release`, `devops-deploy-and-health`, `devops-gotchas`
 
-**CLAUDE.md block** → appended to `~/.claude/CLAUDE.md` with marker lines. The installer only appends if the markers aren't already present; delete the block and re-run to refresh.
+**CLAUDE.md block** → appended to `~/.claude/CLAUDE.md` between marker lines. On `--update`, the block is refreshed if you haven't edited it; preserved if you have.
 
 ## Superpowers dependency
 
@@ -53,14 +75,13 @@ CLAUDE_DIR=/tmp/groundskeeper-preview ./install.sh
 
 ## Refreshing or removing
 
-The installer never overwrites. To refresh a single file:
+Three ways to refresh, from safest to most destructive:
 
-1. Delete it (`rm ~/.claude/playbooks/verification.md`)
-2. Re-run the installer — it will reinstall what's missing
+1. **`./install.sh --update`** — refresh files you haven't modified; preserve files you have. The normal update path. Requires the `.groundskeeper-manifest` file to know what "unmodified" means, which the installer writes on first install.
+2. **Delete then re-run** — `rm ~/.claude/playbooks/verification.md` then re-run `./install.sh`. Reinstalls just the file you removed. Useful for a targeted reset without `--force`.
+3. **`./install.sh --force`** — overwrite every shipped file. Destructive. Use when you want to reset to upstream and discard local edits.
 
-To refresh the CLAUDE.md block, delete the lines between `# <<< groundskeeper ...` and `# <<< end groundskeeper >>>` and re-run.
-
-To uninstall, delete `~/.claude/playbooks/`, remove the installed skills from `~/.claude/skills/`, and delete the marker block in `~/.claude/CLAUDE.md`. There is no automated uninstall by design — removal should be deliberate.
+To uninstall, delete `~/.claude/playbooks/`, remove the installed skills from `~/.claude/skills/`, delete the marker block in `~/.claude/CLAUDE.md`, and remove `~/.claude/.groundskeeper-manifest`. There is no automated uninstall by design — removal should be deliberate.
 
 ## Repo layout
 
