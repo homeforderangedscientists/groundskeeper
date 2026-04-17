@@ -2,6 +2,8 @@
 
 > A field manual for partnering an engineer with a coding agent. Drawn from real scar tissue accumulated across four very differently-shaped efforts — a full-stack web application shipped over two years, a server built almost entirely by parallel agents against external specs, a high-velocity web app that shipped nine major versions in three days, and a community-data web app driven by explicit security and visual audit passes. Between them: Python and Go and TypeScript backends, React and vanilla frontends, twenty-four releases on one project and nine in three days on another, teams ranging from two humans to a dozen parallel agents. All four are referenced throughout; you do not need access to any of them — every story this playbook relies on is told in full, right here. Written to be useful to humans *and* to agents loaded with this file as context.
 
+> **Agents loaded with this file as context:** jump to [Appendix A](#appendix-a--if-you-are-an-agent-reading-this) for the imperative-only fast path. **Humans:** read in order.
+
 ## The thesis
 
 > *We can create art and beauty with a computer.*
@@ -20,6 +22,19 @@ Each layer exists to free the next. A flaky pipeline drags the human down into m
 
 The tagline is the point of the project. The rest of this playbook is the apparatus that serves it.
 
+## The four case studies at a glance
+
+Every field note in this playbook comes from one of four real projects. The body refers to them by number — "the second case study," "the third case study." This table orients the reader once so the shorthand works everywhere else. Long-form in [Appendix C](#appendix-c--about-the-case-studies).
+
+| # | Shape | Scale | Duration | What it added to the rules |
+|---|---|---|---|---|
+| 1 | Full-stack web app (Python/React), production users | ~24 releases, small team + agents | ~2 years | The baseline. Every rule starts here. |
+| 2 | Parallel-agent protocol server (Go + Python sidecars) | 9 releases, 3 → 70+ adapters, up to 12 parallel agents | ~6 months | Interface-as-coordination-protocol, wave pattern, explicit merge points, nested cycles, explicit descoping. |
+| 3 | High-velocity time-tracking web app (React/TypeScript/Supabase) | 9 major versions in 3 days | 3 days | Partnership-architecture failure mode (v6→v7 worktree pivot); "right evidence for the wrong claim is theater." |
+| 4 | Community-data web app with audit cadence (React/Vite/edge functions) | Scheduled security + visual audit releases | Ongoing | Systematic audit as craft work; duplicates-that-drift clause on "write a skill after the third correction." |
+
+The conventions named in this playbook (`CLAUDE.md`, skills, hooks, `settings.json`) are Claude Code's. Other harnesses have equivalents — `.cursorrules`, `AGENTS.md`, `GEMINI.md`, and their respective config files. **The practice is portable; the filenames are not.**
+
 ## This playbook has a companion
 
 This document has a sibling: the **DevOps Playbook**, derived from the same case study and the same retro practice. They are a pair, not duplicates. The DevOps Playbook tells you how to build the boring pipeline — health endpoints, blue-green deploys, release-please, Docker parity, the mechanics layer — phase by phase. This playbook tells you how the human and the agent divide the work *inside* that pipeline, and who owns what when it breaks.
@@ -36,6 +51,8 @@ Both together are the practice. Neither alone is.
 Every chapter has two layers. The top layer is a **rule** — one imperative line you could pin above your desk. Under it, a **Why** (the constraint or the scar that produced the rule) and a **How to apply** (when it fires). Then a narrative paragraph in the voice of someone who learned it the hard way. At the bottom, a **field note** — a short inline vignette from the case studies, naming the bug by its nickname and telling you just enough to feel the bruise.
 
 Read the rule. If you believe it, skim. If you don't, read the story — the story is where the rule earned its keep.
+
+You'll also see lines marked `*Pin:*` scattered through the chapters. A **pin** is the sentence the whole chapter compresses to — the line worth taping to a monitor, worth extracting into memory, worth handing to an agent when the narrative is too long. Pins are the agent-facing one-liners that survive when everything else is forgotten. When a pin contradicts its surrounding narrative, the pin wins.
 
 Here's the format, with a real example:
 
@@ -1057,17 +1074,23 @@ Terms with local meaning — reach for this when a word is doing more work than 
 - **Brainstorm** — the first step of the loop; a skill invocation that turns a vague idea into a written spec. See [§4](#4-the-loop).
 - **CLAUDE.md** — the project-instructions file the harness loads automatically as system context at the start of every conversation. Claude Code calls it CLAUDE.md; other harnesses use different filenames (`.cursorrules`, `AGENTS.md`, `GEMINI.md`) for the same role. See [§2](#2-the-workspace).
 - **Field note** — a short inline vignette that grounds a rule in a real event from the case studies; appears in the human layer of every two-layer chapter. See [How to read this playbook](#how-to-read-this-playbook).
+- **File-boundary parallelism** — a parallel-agent coordination model where each agent owns a disjoint set of files, assigned before any work begins, with shared touchpoints deferred to a post-parallel merge pass. The alternative to branch-level or worktree-level isolation. See [§11](#11-parallel-agents--worktrees).
 - **Flexible skill** — a skill whose steps are guidelines to adapt to context, as opposed to a rigid skill that must be followed exactly. See [§6](#6-skills-as-institutional-knowledge).
 - **Hook** — a shell command the harness executes automatically on a named event (e.g., `post-tool-use`, `pre-commit`) without waiting for an explicit agent invocation. See [§2](#2-the-workspace).
 - **Memory** — one of four typed persistent notes (user, feedback, project, reference) that an agent writes and reads across conversations to preserve context beyond a single session. See [§5](#5-memory-hygiene).
+- **Merge point** — a shared file (config registry, main entrypoint, integration test, dependency manifest) that every parallel agent's work eventually has to touch. In a well-planned fan-out, merge points are owned by a single single-threaded pass after the parallel phase finishes, not edited by the parallel agents. See [§11](#11-parallel-agents--worktrees).
+- **Pin** — a one-sentence extractable lesson marked inline with `*Pin:*`. The distilled version of a chapter's argument, written to survive when the surrounding narrative is forgotten — small enough to remember, specific enough to act on, structured so an agent can lift it into memory unchanged. When a pin contradicts the surrounding prose, the pin wins. See [How to read this playbook](#how-to-read-this-playbook).
 - **Plan** — a written, step-by-step implementation guide derived from a spec that defines how to build something before any code is touched. See [§12](#12-plan-quality).
+- **Rescue protocol** — the three-horizon recovery playbook (next hour, next day, next week) for teams whose agent partnership has broken down. Not an essay — a checklist. See [§10](#10-the-rescue-protocol).
 - **Rigid skill** — a skill whose steps must be followed exactly in order, with no discretionary adaptation. See [§6](#6-skills-as-institutional-knowledge).
 - **settings.json** — the harness-level configuration file that controls which tools are available, what permissions are granted, and which hooks are registered. See [§2](#2-the-workspace).
 - **Skill** — an invokable, named procedure with a defined discipline; the harness construct, not the colloquial sense of "ability." See [§6](#6-skills-as-institutional-knowledge).
 - **Spec** — a written design contract that describes what to build, captured before planning begins; a plan covers how to satisfy a spec. See [§12](#12-plan-quality).
 - **Subagent** — a fresh child agent dispatched with a curated context window, used to protect the parent's context or to run isolated work in parallel. See [§11](#11-parallel-agents--worktrees).
 - **The loop** — the canonical development cycle: brainstorm → plan → TDD → verify → commit → retro; every feature passes through every step. See [§4](#4-the-loop).
+- **Three-layer thesis** — the playbook's core division of labor: the pipeline handles mechanics, the agent handles elaboration, the human handles craft. Every rule in the document is, at root, a maneuver to keep each layer in its lane. See [The thesis](#the-thesis).
 - **Two-layer format** — the playbook's chapter convention: an imperative rule at the top (the agent layer) followed by narrative explanation and a field note (the human layer). See [How to read this playbook](#how-to-read-this-playbook).
+- **Wave pattern** — a parallel-work rhythm in which the cheapest, most mechanical items run first — as a load test for the build, config, and test harness — before committing agents to heavyweight implementations. "Check the parachute before jumping." See [§11](#11-parallel-agents--worktrees).
 
 # Appendix C — About the case studies
 
