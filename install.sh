@@ -61,7 +61,7 @@ if [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
-if [[ -n "$SCRIPT_DIR" && -f "$SCRIPT_DIR/docs/agent-playbooks/INDEX.md" && -d "$SCRIPT_DIR/claude-config" ]]; then
+if [[ -n "$SCRIPT_DIR" && -f "$SCRIPT_DIR/claude-config/playbooks/INDEX.md" && -d "$SCRIPT_DIR/claude-config/skills" ]]; then
   SRC_DIR="$SCRIPT_DIR"
   step "Using local checkout at $SRC_DIR"
   ok "source ready"
@@ -81,8 +81,8 @@ else
 fi
 
 # Sanity-check the source layout
-[[ -d "$SRC_DIR/docs/agent-playbooks" ]] || fail "source missing docs/agent-playbooks/"
-[[ -d "$SRC_DIR/claude-config" ]] || fail "source missing claude-config/"
+[[ -d "$SRC_DIR/claude-config/playbooks" ]] || fail "source missing claude-config/playbooks/"
+[[ -d "$SRC_DIR/claude-config/skills" ]] || fail "source missing claude-config/skills/"
 
 # --- install playbooks ------------------------------------------------------
 
@@ -91,7 +91,7 @@ mkdir -p "$CLAUDE_DIR/playbooks"
 
 playbooks_added=0
 playbooks_skipped=0
-for src in "$SRC_DIR/docs/agent-playbooks"/*.md; do
+for src in "$SRC_DIR/claude-config/playbooks"/*.md; do
   name="$(basename "$src")"
   dest="$CLAUDE_DIR/playbooks/$name"
   if [[ -e "$dest" ]]; then

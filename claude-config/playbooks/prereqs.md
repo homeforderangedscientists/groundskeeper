@@ -44,6 +44,6 @@ If you run these playbooks *without* the superpowers plugin, the partial-overlap
 When a superpowers skill is renamed:
 
 1. Edit this file — change the skill name in the table.
-2. `grep -rn <old-name> docs/agent-playbooks/` — find every Prereq block and inline reference.
+2. `grep -rn <old-name> claude-config/playbooks/` — find every Prereq block and inline reference.
 3. Update references.
 4. Commit with a message that names the upstream version bump.

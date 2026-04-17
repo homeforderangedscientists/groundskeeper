@@ -67,16 +67,18 @@ To uninstall, delete `~/.claude/playbooks/`, remove the installed skills from `~
 ```
 groundskeeper/
 ├── install.sh                           # homebrew-style installer
-├── docs/
+├── claude-config/                       # install payload (everything here ships)
+│   ├── CLAUDE.md.fragment                    # appended to ~/.claude/CLAUDE.md
+│   ├── playbooks/                            # rule-first extracts (installed)
+│   │   ├── INDEX.md                          # task-to-playbook map
+│   │   ├── prereqs.md                        # superpowers skill manifest
+│   │   └── *.md                              # 14 playbooks
+│   └── skills/                               # thin skill wrappers (installed)
+│       └── */SKILL.md
+├── docs/                                # human-readable narrative docs
 │   ├── engineer-agent-playbook-portable.md   # the full narrative playbook
-│   └── agent-playbooks/                      # rule-first extracts (installed)
-│       ├── INDEX.md                          # task-to-playbook map
-│       ├── prereqs.md                        # superpowers skill manifest
-│       └── *.md                              # 14 playbooks
-└── claude-config/
-    ├── CLAUDE.md.fragment                    # appended to ~/.claude/CLAUDE.md
-    └── skills/                               # thin skill wrappers (installed)
-        └── */SKILL.md
+│   └── DEVOPS-PLAYBOOK-portable.md           # the full DevOps playbook
+└── retros/                              # release retrospectives
 ```
 
 ## License
