@@ -273,6 +273,31 @@ Project tracked in Linear with a short team key (e.g., `ABC`).
 
 What makes this work: a status block at the top so every cold start knows where the project is *today*; architecture decisions stated as bullets, not prose; essential commands as a terse list, not a manual; explicit agent routing so the harness picks the right specialist; and every detail-heavy thing (changelog, PRD, sprint state) pushed out to a linked doc instead of inlined. Anything that would move week-to-week lives somewhere else.
 
+**And for contrast, what the same file looked like when it went bad.** A real excerpt from the pre-haircut version, anonymized:
+
+```markdown
+## Important Procedures
+
+When starting a new feature, first check CURRENT_SPRINT.md to see the active
+sprint ID, then review the last three retros in docs/retros/ for any open
+action items, then grep the codebase for TODO comments tagged with the sprint
+ID, then run `make sprint-refresh` to update the local task list, then open
+the relevant Linear ticket and cross-reference acceptance criteria against
+the PRD, then…
+
+## Gotchas
+
+- Remember that the admin router is at routes/admin.py and also at
+  routes/v2/admin.py (legacy); edits usually need both.
+- The audit middleware is registered in main.py but conditionally disabled
+  in test mode; check config.TESTING before adding new middleware.
+- Always run `pytest -k "not slow"` locally; the full suite takes 45 minutes.
+- Never commit without running pre-commit, even though pre-commit is in the
+  hook config (sometimes it doesn't fire).
+```
+
+Every line here is wrong-layer: the procedure is a skill hiding as a paragraph; the "admin is in two places" and "middleware wiring" gotchas belong in the code itself (one grep away); "run pytest -k" is atmosphere the agent will ignore; the pre-commit note admits the harness config is broken and asks the agent to compensate. Forty lines of this and the agent is reading more CLAUDE.md than code.
+
 **The layers, laid out.** The workspace isn't one file — it's five surfaces, each catching a different class of thing. Here's what goes where:
 
 | File / Surface | What it's for | How often it changes | Examples |
@@ -597,6 +622,10 @@ The Health Check That Wasn't is the canonical example — three deploys spent fi
 **The fix:** Stop trying to out-discipline the architecture. Change the *shape* of the collaboration, not the prompts. Read §11 and ask: are tasks actually independent at the level the coordination model assumes? Is there shared state under the isolation that nobody is managing? *Pin: when the agents are good and the result is bad, the architecture is wrong.*
 
 The canonical scar is the third case study's v6→v7 worktree pivot *(told in full in §11)* — same agents, same discipline, worktree-per-agent produced branch confusion and orphaned refs; team-in-one-worktree with file-boundary ownership shipped cleanly. The rail you couldn't out-discipline was the *coordination architecture*, not the pipeline.
+
+### One more failure mode to name: you.
+
+Every entry above is a symptom caused by the agent, or the architecture around it. Name honestly: most of them have a human-side twin. You can skip the brainstorm because the fix "felt obvious" (the Four Scoping Gaps twin to "loops on wrong fix"). You can skip the retro because the cycle "didn't really have anything to learn" (the twin to "produces slop"). You can accept "tests pass" as evidence because typing the verify-and-paste ritual *again* is boring (the twin to "confidently lies about state"). You can promote a correction to a CLAUDE.md note instead of a skill because a note is five seconds and a skill is an hour (the twin to "can't be trusted with anything important"). When every failure mode in this chapter says the agent did X, ask whether you did the thing that let the agent get there. The answer is usually yes, and the fix is usually cheaper when you catch it on your own side. *Pin: every agent failure has a human antecedent. Look for it before you blame the model.*
 
 ## §10 The rescue protocol
 
