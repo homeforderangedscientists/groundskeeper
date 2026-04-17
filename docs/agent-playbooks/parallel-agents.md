@@ -1,5 +1,7 @@
 # Parallel Agents & Worktrees
 
+**Prereq skills:** `superpowers:dispatching-parallel-agents`, `superpowers:using-git-worktrees`, `superpowers:subagent-driven-development` cover dispatch mechanics and worktree usage. This playbook adds the *topology*: file-boundary ownership, interface-first design, merge-point discipline, and the wave pattern. See `prereqs.md`.
+
 > Dispatching multiple agents is a force multiplier — and a coordination minefield. The rules that hold across projects are about *architecture*, not discipline. You can't out-discipline a bad topology.
 
 ## Rules

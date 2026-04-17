@@ -1,5 +1,7 @@
 # Plan Quality
 
+**Prereq skill:** `superpowers:writing-plans` covers *how* to write a plan. This playbook is the *rubric* for whether the plan you wrote is good enough to execute. See `prereqs.md`.
+
 > A plan is a contract you write with future-you. Future-you will be context-deprived, possibly stressed, definitely without the reasoning you had during planning. The plan either carries that reasoning forward or it doesn't — and if it doesn't, future-you will fill the gaps with whatever seems plausible.
 
 ## Rules

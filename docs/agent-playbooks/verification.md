@@ -1,5 +1,7 @@
 # Verification Before Completion
 
+**Prereq skill:** `superpowers:verification-before-completion` enforces the gate: run the command, paste the output, don't claim done without evidence. This playbook adds the *why* (tests ≠ feature), *where* (environment that matters), and *what to verify* (health checks, infrastructure migrations). See `prereqs.md`.
+
 > **Load-bearing.** Paired with `retros.md`. Every other discipline in these playbooks fails the same way when verification is sloppy: confidently, in production.
 
 ## Rules
@@ -9,8 +11,7 @@
 **How to apply:** For UI work, open a browser. For deploy work, hit the live endpoint. For data work, query the data. For API work, read the response *body*, not just the status code. If "done" lives behind a screen, look at the screen. **Infrastructure migrations** specifically need tests on the *interaction* pipeline, not just the *data* pipeline — when you swap a foundation layer (data layer, auth layer, router, state management), the test gap is always on the interaction side because the unit tests were written for the old substrate's assumptions.
 
 ### Evidence before assertions. Always
-**Why:** An agent that confidently says "the build passes" without showing the output is an agent you cannot trust. Verification is a habit, not a claim. Accept "I ran the tests and they passed" as evidence and you've trained the agent that prose is sufficient — and prose is what hallucinations look like.
-**How to apply:** Never claim success without producing the verification command *and* its actual output, pasted in. `pytest` plus the green dots is evidence. "Tests pass" is not. If I say "deploy succeeded," the next line had better be a `curl` against the live URL with the response body attached.
+This is the core gate in `superpowers:verification-before-completion` — load that skill for enforcement. The playbook-level point: prose summaries of test results ("tests pass") are indistinguishable from hallucinated test results. Paste the command and its output, or it didn't happen.
 
 ### Evidence of the *wrong claim* is still theater
 **Why:** A green check is only evidence for the specific claim it tests. "180 unit tests passed" is evidence that 180 unit tests passed — not that the feature works, the component renders, the cache-hit path fires, or the touch event reaches the handler. Evidence that answers the wrong question is dangerous precisely because it *looks* authoritative.

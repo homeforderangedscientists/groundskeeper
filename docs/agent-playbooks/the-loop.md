@@ -1,5 +1,7 @@
 # The Loop
 
+**Prereq skills:** `superpowers:brainstorming`, `superpowers:writing-plans`, `superpowers:test-driven-development`, `superpowers:verification-before-completion`. Those skills execute the individual steps. This playbook is about *how the loop fits together*: first-conversation discipline, pacing, drift correction, and cycle nesting. See `prereqs.md`.
+
 > The core development cycle — **brainstorm → plan → TDD → verify → commit → retro** — plus first-conversation discipline. Every rule in the other playbooks hangs off this.
 
 ## First conversation
@@ -21,12 +23,12 @@
 Brainstorm → Plan → TDD → Verify → Commit → Retro. Each step catches a class of failure the others can't. Skip a step out loud or pay for it silently.
 
 ### Run the whole loop. Skip a step out loud or pay for it silently
-**Why:** Each step catches a different class of failure. Brainstorming catches scope drift. Planning catches missing files. TDD catches wrong implementation. Verification catches "tests green, feature broken." Commit creates a rollback point. Retro catches the mistake you're about to repeat.
-**How to apply:** Run all six for every non-trivial task. If you skip one, say which and why. "I'm skipping TDD because this is a doc-only change" is fine. Silently skipping is how you get surprise regressions on Thursday.
+**Why:** Each step catches a different class of failure that the others can't: scope drift, missing files, wrong implementation, "tests green / feature broken," irreversibility, and the mistake you're about to repeat.
+**How to apply:** Run all six for every non-trivial task. Each step has its own superpowers skill that enforces the discipline — load the one you need at that step. If you skip a step, say which and why. "I'm skipping TDD because this is a doc-only change" is fine. Silently skipping is how you get surprise regressions on Thursday.
 
 ### Brainstorm before planning. Plan before code
 **Why:** A plan written from a vague idea is a wish list. Code written from a vague plan is a mess you rewrite. Out of order, the bounds are hallucinated.
-**How to apply:** Even for a one-day task, brainstorm first — fifteen minutes. Articulate what you actually want, what you've ruled out, what "done" looks like. Then plan. Then code. *Qualifier:* the brainstorm amortizes across cycles when the work is repetitive and the upfront thinking was rigorous (e.g., a single PRD feeding ten releases). The test: are the current cycle's decisions pinned by the earlier brainstorm, or being reinvented each release? If reinventing, the brainstorm is stale; redo it.
+**How to apply:** Even for a one-day task, brainstorm first (`superpowers:brainstorming` sets the discipline). Then plan (`superpowers:writing-plans` + the `plan-quality.md` rubric). Then code. *Qualifier:* the brainstorm amortizes across cycles when the work is repetitive and the upfront thinking was rigorous (e.g., a single PRD feeding ten releases). The test: are the current cycle's decisions pinned by the earlier brainstorm, or being reinvented each release? If reinventing, the brainstorm is stale; redo it.
 
 ### Frequent commits are not optional
 **Why:** Agents introduce subtle bugs across many files at once. Bisecting only works if commits are small enough to bisect against. One giant commit is an unbisectable wall.

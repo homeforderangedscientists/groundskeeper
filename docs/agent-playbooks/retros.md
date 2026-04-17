@@ -1,5 +1,7 @@
 # The Retro Habit
 
+**Prereq skill:** `retrospective` covers the voice and narrative style for retros. This playbook adds the *discipline*: when to trigger (cycle close or surprise), why skipping compounds, three audiences, and the five-part anatomy. See `prereqs.md`.
+
 > **Second load-bearing chapter.** Paired with `verification.md`. Verification catches the failure; retros convert it into a rule. Skip verification and the failure ships. Skip the retro and the failure re-ships, forever.
 
 ## Rules

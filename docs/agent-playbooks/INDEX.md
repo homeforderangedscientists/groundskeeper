@@ -4,6 +4,8 @@ Rule-first extracts from the engineer-agent and DevOps playbooks, sized for agen
 
 **If you are an agent:** read this index, pick the playbooks that apply to your task, and load them. Cross-references between playbooks are fine — follow them when the task straddles topics.
 
+**Skill dependencies:** Five playbooks (`the-loop`, `plan-quality`, `verification`, `retros`, `parallel-agents`) assume the `superpowers` plugin is installed. See `prereqs.md` for the full manifest and update protocol. The other nine playbooks stand alone.
+
 ## Engineer + agent (how to work with me)
 
 - [mental-models.md](mental-models.md) — How to think about me: cold-start briefing, delegate the task not the understanding, where my judgment is strong vs weak.
@@ -12,7 +14,7 @@ Rule-first extracts from the engineer-agent and DevOps playbooks, sized for agen
 - [memory-and-skills.md](memory-and-skills.md) — Memory hygiene (four types, stale-is-worse-than-none) and when to promote a correction into a skill.
 - [verification.md](verification.md) — Load-bearing. "Tests pass" ≠ "feature works." Evidence before assertions. Verify in the environment that matters.
 - [trust-boundaries.md](trust-boundaries.md) — Blast radius, scoped authorization, investigate-not-delete.
-- [failure-modes.md](failure-modes.md) — Five failure shapes + the rescue protocol when the partnership is broken.
+- [failure-modes.md](failure-modes.md) — Six failure shapes (plus the human-antecedent closing note) + the rescue protocol when the partnership is broken.
 - [parallel-agents.md](parallel-agents.md) — Fan-out rules, worktrees, merge points, subagent accountability.
 - [plan-quality.md](plan-quality.md) — No placeholders, 5-minute steps, cover the spec, descope explicitly.
 - [retros.md](retros.md) — Second load-bearing chapter, paired with verification. Write them in voice, at cycle close and after surprises, with an extractable lesson.
