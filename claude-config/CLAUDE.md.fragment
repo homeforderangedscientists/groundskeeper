@@ -1,0 +1,23 @@
+# Engineer + Agent Playbook
+
+Installed by the groundskeeper engineer+agent playbook. Source: https://github.com/homeforderangedscientists/groundskeeper
+
+## How to use this
+
+For task-specific guidance, load the relevant playbook from `~/.claude/playbooks/`. The task-to-playbook map is in `~/.claude/playbooks/INDEX.md`.
+
+## Core rules (always-on)
+
+- **Bootstrap with the smallest context that contains the answer.** Don't dump the whole repo into the window — hand over the load-bearing files and let the agent pull more if it asks.
+- **Correct drift in message 2, not message 50.** Corrections early are nearly free; corrections late mean rewriting turns built on top of the drift. If an agent does something you don't want, stop and say so — then ask whether the correction should become a memory entry.
+- **Evidence before assertions.** Never accept "tests pass" or "deploy succeeded" without the command output pasted in. Prose summaries are indistinguishable from hallucinations. See `~/.claude/playbooks/verification.md`.
+- **Skipped retros compound.** Write a retro at every cycle close or right after a surprise. Every retro ends with one sentence the next loop can extract as a rule. See `~/.claude/playbooks/retros.md`.
+- **Every agent failure has a human antecedent.** Before fixing the agent, check upstream — did you skip the brainstorm, skip the retro, accept prose as evidence, or let a correction slide?
+
+## Superpowers plugin
+
+Five playbooks (`the-loop`, `plan-quality`, `verification`, `retros`, `parallel-agents`) layer on top of the `superpowers` plugin. Install superpowers first, or those playbooks' Prereq pointers will degrade to notes. See `~/.claude/playbooks/prereqs.md`.
+
+## Skills installed alongside
+
+The install also adds task-triggered skills under `~/.claude/skills/`: `retrospective`, `retro-discipline`, `plan-quality-rubric`, `verification-semantics`, `parallel-agents-topology`, `failure-modes-diagnosis`, and four `devops-*` skills. Each is a thin pointer into the corresponding playbook.
