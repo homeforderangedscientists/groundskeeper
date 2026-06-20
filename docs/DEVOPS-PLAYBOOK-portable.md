@@ -3337,6 +3337,48 @@ The case-study Track B project's CI pipeline got slower — *much* slower. 159 u
 
 **Lesson:** **your test runner has version sensitivities; pin both the runner version and the Node major version, and audit them when CI starts feeling slow.** A test suite that suddenly takes 60× longer is a signal that something underneath it has changed even if your test code didn't. The first place to look is the runner-vs-runtime compatibility matrix, *before* you start refactoring tests. The wider lesson: any tool you use across hundreds of CI runs accumulates subtle version-compatibility surprises; the moment something feels slower than it used to, audit the toolchain versions before you audit the work.
 
+### 26. 🟥 `certbot --standalone` renewal silently loses the port-80 race against nginx *(Track A)*
+
+Let's Encrypt certs live 90 days and are meant to auto-renew. The certbot package installs its own renewal job — a systemd `certbot.timer` (or `/etc/cron.d/certbot`) that runs `certbot renew` twice daily as root. Crucially, `renew` **reuses the authenticator the cert was first issued with.** If you bootstrapped the cert with `certbot certonly --standalone`, renewal also runs standalone — and standalone needs to bind port 80 to answer the ACME http-01 challenge. But on a server that terminates TLS through nginx, **nginx already holds port 80.** Every renewal attempt fails with "address already in use." `renew` is quiet by design and the timer's failure goes to the system journal nobody reads, so it fails *silently* on every run starting ~30 days before expiry — then the cert lapses and every visitor gets "This connection is not private." The whole site is down, and the first signal is a user complaint.
+
+The case-study Track A project (Proof of Learning) shipped exactly this. The cert was issued `--standalone` with a hand-rolled renewal cron that had a `--post-hook 'systemctl reload nginx'` but no `--pre-hook 'systemctl stop nginx'` to free port 80 — so it could never have succeeded against a running nginx. Renewal failed nightly for ~30 days; the cert expired on May 26, 2026 and nobody noticed for over three weeks.
+
+**Immediate recovery (cert already expired):**
+```bash
+sudo systemctl stop nginx
+sudo certbot renew --force-renewal   # standalone can bind :80 now that nginx is stopped
+sudo systemctl start nginx
+```
+
+**Permanent fix — switch the authenticator so nginx never has to stop:**
+```bash
+# nginx authenticator: serves the challenge THROUGH running nginx. Zero downtime,
+# no port-80 race. certonly (not run) means it won't edit your hand-managed nginx.conf.
+sudo certbot certonly --nginx -d example.com -d www.example.com \
+  --deploy-hook 'systemctl reload nginx'   # persisted into renewal conf; reloads after each renewal
+sudo certbot renew --dry-run               # PROVE renewal works against running nginx before you trust it
+```
+(`--webroot -w /var/www/letsencrypt` is the equivalent fix if you'd rather not use the nginx plugin. Either way the principle is the same: renew without contending for a port nginx owns.)
+
+**The sharp edge that bit us a second time — `--keep-until-expiring` makes the migration a no-op.** The authenticator is stored *per cert*, in `/etc/letsencrypt/renewal/<domain>.conf`, and certbot only rewrites it **when it actually obtains a cert.** If the live cert is still valid (it usually is — you're fixing renewal *before* expiry, or you just force-renewed to recover), `certbot certonly --nginx --keep-until-expiring` sees a healthy cert, prints "Certificate not yet due for renewal; no action taken," exits **0** — and leaves `authenticator = standalone` untouched. The case-study project shipped a "fix" script with exactly that flag, re-ran it, watched it succeed, and then `certbot renew --dry-run` *still* failed with "Could not bind TCP port 80." The script had done nothing and said so cheerfully.
+
+To actually migrate the authenticator on a still-valid cert you must **force a reissue through the new authenticator** (or hand-edit the conf, or `certbot reconfigure` on certbot ≥ 2.9):
+```bash
+sudo certbot certonly --nginx -d example.com -d www.example.com \
+  --force-renewal --deploy-hook 'systemctl reload nginx'   # --force-renewal is load-bearing
+sudo certbot renew --dry-run
+grep -E '^(authenticator|installer)' /etc/letsencrypt/renewal/example.com.conf   # confirm it reads "nginx"
+```
+A robust setup script should detect the stored authenticator and force the switch only when it isn't already `nginx` (idempotent, no needless reissue once migrated).
+
+**Four lessons, in order of importance:**
+1. **Auto-renewal you have never watched succeed is not auto-renewal.** Run `certbot renew --dry-run` at setup time and treat a passing dry-run as part of "done." A renewal mechanism that has never completed once is a hope, not a system.
+2. **Monitor the served artifact, not the renewal job.** A renewal that fails silently is invisible until the cert lapses. Check the cert *actually served on :443* daily (`echo | openssl s_client -connect 127.0.0.1:443 -servername example.com | openssl x509 -checkend $((20*86400))`) and alarm at ~20 days out. This needs no root and verifies end-to-end what browsers see — it catches expiry from *any* cause (failed renewal, wrong cert path, manual fumble), not just the one you predicted.
+3. **A repair step must verify the state it intended to change — not just exit 0.** The migration script above exited cleanly while changing nothing, because "the command ran" and "the config changed" are different facts. After any fix that mutates stored config, *assert the new state*: `grep authenticator …`, re-run the dry-run, diff the file. A green exit code on a no-op is how a fix manufactures false confidence and the incident reopens a week later. (This is also why the verification here lands on the served cert and the conf contents, not on "the script said OK.")
+4. **Gate the deploy on it too.** Add a cert-expiry check to preflight so a deploy refuses to ship past an expiring cert — but remember the gate only fires when you deploy; the daily monitor is what covers the quiet stretches between releases. You need both.
+
+This is the TLS-layer cousin of Gotcha #21 (the precondition that was never satisfied) and #8 (verify against the surface a user actually hits): the renewal job's exit code is not the thing you care about — the cert a browser receives is. And as lesson 3 spells out, *the fix script's* exit code isn't either.
+
 ---
 
 ## Appendix B: Ship-Readiness Checklist
@@ -3380,6 +3422,9 @@ Before you call it done, walk this list. Every box should be checked.
 - [ ] Manifest JSON is validated with `python3 -m json.tool` after write
 - [ ] Post-deploy verification hits `/api/v1/health` with headers, NOT `/health`
 - [ ] Auto-rollback path is tested (break smoke test, deploy, confirm rollback)
+- [ ] TLS cert renewal proven with `sudo certbot renew --dry-run` against running nginx (Gotcha #26)
+- [ ] Cert was issued with the nginx/webroot authenticator, NOT `--standalone` (Gotcha #26)
+- [ ] preflight refuses to deploy past an expired/expiring cert (Gotcha #26)
 
 ### Release
 - [ ] `release-please-config.json` exists WITHOUT `target-branch` at root
@@ -3396,6 +3441,7 @@ Before you call it done, walk this list. Every box should be checked.
 - [ ] Frontend footer shows real version and git SHA
 - [ ] UptimeRobot or equivalent monitors `/health`
 - [ ] Sentry (or equivalent) is configured with `release=<git_sha>`
+- [ ] A daily job alarms when the *served* TLS cert is within ~20 days of expiry (Gotcha #26)
 
 ### Docs
 - [ ] `docs/CI-CD.md` exists and is accurate
@@ -3408,6 +3454,7 @@ Before you call it done, walk this list. Every box should be checked.
 - [ ] You have a PAT set up for release-please (Gotcha #5)
 - [ ] Your deploy script self-reexecs (Gotcha #9)
 - [ ] Your verification curl hits `/api/v1/health` (Gotcha #8)
+- [ ] Your TLS cert renews without stopping nginx, and a daily monitor watches the served cert (Gotcha #26)
 
 ### Track B additions
 
@@ -3516,6 +3563,16 @@ curl -H "X-API-Key: $KEY" https://your-domain.com/api/v1/health | jq .git_sha
 
 # Check deploy manifest on server
 cat /opt/myapp/deploy-manifest.json
+
+# TLS: what cert is actually served, and when does it expire? (Gotcha #26)
+echo | openssl s_client -connect 127.0.0.1:443 -servername your-domain.com 2>/dev/null \
+  | openssl x509 -noout -enddate
+
+# TLS: prove auto-renewal works against running nginx (run after every cert/nginx change)
+sudo certbot renew --dry-run
+
+# TLS: emergency renew when the cert has already expired (standalone needs :80 free)
+sudo systemctl stop nginx && sudo certbot renew --force-renewal && sudo systemctl start nginx
 
 # Force-trigger deploy.yml (emergency path)
 gh workflow run deploy-only.yml -f reason="your reason" --ref main
