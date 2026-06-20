@@ -3360,12 +3360,24 @@ sudo certbot renew --dry-run               # PROVE renewal works against running
 ```
 (`--webroot -w /var/www/letsencrypt` is the equivalent fix if you'd rather not use the nginx plugin. Either way the principle is the same: renew without contending for a port nginx owns.)
 
-**Three lessons, in order of importance:**
+**The sharp edge that bit us a second time — `--keep-until-expiring` makes the migration a no-op.** The authenticator is stored *per cert*, in `/etc/letsencrypt/renewal/<domain>.conf`, and certbot only rewrites it **when it actually obtains a cert.** If the live cert is still valid (it usually is — you're fixing renewal *before* expiry, or you just force-renewed to recover), `certbot certonly --nginx --keep-until-expiring` sees a healthy cert, prints "Certificate not yet due for renewal; no action taken," exits **0** — and leaves `authenticator = standalone` untouched. The case-study project shipped a "fix" script with exactly that flag, re-ran it, watched it succeed, and then `certbot renew --dry-run` *still* failed with "Could not bind TCP port 80." The script had done nothing and said so cheerfully.
+
+To actually migrate the authenticator on a still-valid cert you must **force a reissue through the new authenticator** (or hand-edit the conf, or `certbot reconfigure` on certbot ≥ 2.9):
+```bash
+sudo certbot certonly --nginx -d example.com -d www.example.com \
+  --force-renewal --deploy-hook 'systemctl reload nginx'   # --force-renewal is load-bearing
+sudo certbot renew --dry-run
+grep -E '^(authenticator|installer)' /etc/letsencrypt/renewal/example.com.conf   # confirm it reads "nginx"
+```
+A robust setup script should detect the stored authenticator and force the switch only when it isn't already `nginx` (idempotent, no needless reissue once migrated).
+
+**Four lessons, in order of importance:**
 1. **Auto-renewal you have never watched succeed is not auto-renewal.** Run `certbot renew --dry-run` at setup time and treat a passing dry-run as part of "done." A renewal mechanism that has never completed once is a hope, not a system.
 2. **Monitor the served artifact, not the renewal job.** A renewal that fails silently is invisible until the cert lapses. Check the cert *actually served on :443* daily (`echo | openssl s_client -connect 127.0.0.1:443 -servername example.com | openssl x509 -checkend $((20*86400))`) and alarm at ~20 days out. This needs no root and verifies end-to-end what browsers see — it catches expiry from *any* cause (failed renewal, wrong cert path, manual fumble), not just the one you predicted.
-3. **Gate the deploy on it too.** Add a cert-expiry check to preflight so a deploy refuses to ship past an expiring cert — but remember the gate only fires when you deploy; the daily monitor is what covers the quiet stretches between releases. You need both.
+3. **A repair step must verify the state it intended to change — not just exit 0.** The migration script above exited cleanly while changing nothing, because "the command ran" and "the config changed" are different facts. After any fix that mutates stored config, *assert the new state*: `grep authenticator …`, re-run the dry-run, diff the file. A green exit code on a no-op is how a fix manufactures false confidence and the incident reopens a week later. (This is also why the verification here lands on the served cert and the conf contents, not on "the script said OK.")
+4. **Gate the deploy on it too.** Add a cert-expiry check to preflight so a deploy refuses to ship past an expiring cert — but remember the gate only fires when you deploy; the daily monitor is what covers the quiet stretches between releases. You need both.
 
-This is the TLS-layer cousin of Gotcha #21 (the precondition that was never satisfied) and #8 (verify against the surface a user actually hits): the renewal job's exit code is not the thing you care about — the cert a browser receives is.
+This is the TLS-layer cousin of Gotcha #21 (the precondition that was never satisfied) and #8 (verify against the surface a user actually hits): the renewal job's exit code is not the thing you care about — the cert a browser receives is. And as lesson 3 spells out, *the fix script's* exit code isn't either.
 
 ---
 
